@@ -163,7 +163,7 @@ ggplot(df)+
         legend.text=element_text(size=15))+
   scale_x_datetime(date_breaks = "12 hour", labels = date_format("%d/%m %H:%M"), name="Time")+
   scale_y_continuous(limits=c(-0.7,25),breaks=seq(0,25,5),name="PA (accelerations)",label=scales::number_format(accuracy = 1),
-                     sec.axis=sec_axis(~((.+15-35)/2+35), name="Chestemp (¡ãC)"))+
+                     sec.axis=sec_axis(~((.+15-35)/2+35), name="Chestemp (Â¡Ã£C)"))+
   ggtitle('a') #Figure 3A.a (15 and 35 are arbitrarily selected to plot two different scales)
 
 ggplot(df, aes(x=time)) + 
@@ -397,7 +397,7 @@ ggplot(df_wss_NS)+
 ##Divide NS into 3 clusters
 library(TSclust) #Package for measurements of dissimilarity between time series
 diss_matrix_whole_EUCL_NS<- diss(dataNS, METHOD = "EUCL") #Calculate euclidean distance between rest profiles
-hclust_whole_EUCL_ward_NS <- hclust(diss_matrix_whole_EUCL_NS,method = "ward.D", members = NULL) #Agglomerative clustering with Ward¡¯s method
+hclust_whole_EUCL_ward_NS <- hclust(diss_matrix_whole_EUCL_NS,method = "ward.D", members = NULL) #Agglomerative clustering with WardÂ¡Â¯s method
 hclust_whole_EUCL_ward_NS <- cutree(hclust_whole_EUCL_ward_NS, k = 3) #Cut the tree at 3 clusters
 
 
