@@ -1,0 +1,1 @@
+# Template-for-the-statistical-analysis-of-data-sets-including-activity-and-temperature
