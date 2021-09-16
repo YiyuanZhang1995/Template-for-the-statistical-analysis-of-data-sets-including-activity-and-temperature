@@ -6,4 +6,4 @@ Functions.R provides the functions used to fit harmonic HMMs.
 
 Parameters.csv lists the circadian parameters, the cluster and the most significant period in chest surface temperature for all subjects.
 
-Prob of rest for all subjects free(work).csv summarises the probability of rest in one free (work) day for all subjects
+Prob of rest for all subjects free(work).csv summarises the probability of rest or rest profile in one free (work) day for all subjects
