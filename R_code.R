@@ -31,15 +31,15 @@ cos_baseline<-cos(2*pi*lag*sf/24)
 y_1hmc<-depmix(sqValue~1,transition=~sin_baseline+cos_baseline,
                data=info,nstates=3,family=gaussian(),ntimes=nrow(info)) #Assume that there are 3 hidden states and that the emission density is Gaussian
 
-AIC <- array(NA,10) #The likelihood may have local maxima, thus try 10 starting values and compare AIC
+AIC_hmm <- array(NA,10) #The likelihood may have local maxima, thus try 10 starting values and compare AIC
 for(a in 1:10){
   set.seed(a)
   HMMfit_1hmcs<-try(fit(y_1hmc,verbose=F),TRUE)
   if(isTRUE(class(HMMfit_1hmcs)=="try-error")) 
-  { next } else {AIC[a]=AIC(HMMfit_1hmcs)} 
+  { next } else {AIC_hmm[a]=AIC(HMMfit_1hmcs)} 
 }
-AIC <- as.data.frame(AIC)
-set.seed(which(AIC==min(AIC,na.rm=TRUE))) #Select the one with the lowest AIC
+AIC_hmm <- as.data.frame(AIC_hmm)
+set.seed(which(AIC_hmm==min(AIC_hmm,na.rm=TRUE))) #Select the one with the lowest AIC
 HMMfit_1hmcs<-fit(y_1hmc,verbose=F)
 HMM_results_1hmc<-oneHarmonic_HMMs(HMM=HMMfit_1hmcs,sin1=sin_baseline,cos1=cos_baseline) #Summarise useful parameters 
 
@@ -54,7 +54,7 @@ one_day_summary_subject<-one_day_summary(circadian_states_prob=circadian_states_
 HMM_results_1hmc$one_day_summary_subject<-one_day_summary_subject
 save(HMM_results_1hmc,file=paste0("HMC_",id,"_new.Rdata"))
 
-##Produce Figure 3A.a, 3A.c and 3A.d
+##Produce Figure 2a.i, 2a.iii and 2a.iv
 df <- data.frame(time) 
 time2 <- c(time[-1],NA)
 df$time2 <- time2
@@ -163,8 +163,8 @@ ggplot(df)+
         legend.text=element_text(size=15))+
   scale_x_datetime(date_breaks = "12 hour", labels = date_format("%d/%m %H:%M"), name="Time")+
   scale_y_continuous(limits=c(-0.7,25),breaks=seq(0,25,5),name="PA (accelerations)",label=scales::number_format(accuracy = 1),
-                     sec.axis=sec_axis(~((.+15-35)/2+35), name="Chestemp (¡ãC)"))+
-  ggtitle('a') #Figure 3A.a (15 and 35 are arbitrarily selected to plot two different scales)
+                     sec.axis=sec_axis(~((.+15-35)/2+35), name="Chestemp (????C)"))+
+  ggtitle('i') #Figure 2a.i (15 and 35 are arbitrarily selected to plot two different scales)
 
 ggplot(df, aes(x=time)) + 
   geom_ribbon(data=df, 
@@ -193,7 +193,7 @@ ggplot(df, aes(x=time)) +
   annotate("text", x=df$time[400], y=1.1, hjust=0,label= "Highly active state",size=5)+
   annotate("text", x=df$time[800], y=1.05,hjust=0,label= "Work in diary",size=5)+
   annotate("text", x=df$time[800], y=1.1, hjust=0,label= "Sleep in diary",size=5)+
-  ggtitle('c') #Figure 3A.c
+  ggtitle('iii') #Figure 2a.iii
 
 circadian_states_prob_forplot <- circadian_states_prob[1:(288*2),]
 start_hour<- 20 #Make sure that the daily profile starts around 20:00
@@ -225,9 +225,9 @@ ggplot(one_day_prob, aes(x=time)) +
   scale_x_datetime(date_breaks = "4 hour", labels = date_format("%H:%M"))+
   scale_y_continuous(breaks=seq(0,1,0.2))+
   ylab("Probability of every state")+ xlab("Clock time")+
-  ggtitle('d') #Figure 3A.d
+  ggtitle('iv') #Figure 2a.iv
 
-##Produce Figure 4A assuming the harmonic HMMs have been fitted on the physical activity time series of all the day-shift subjects
+##Produce Figure 3a assuming the harmonic HMMs have been fitted on the physical activity time series of all the day-shift subjects
 sleepAllDS  <- c() 
 parameter <- read.csv("Parameters.csv")
 for (id in parameter$id[parameter$type=='Day']){
@@ -342,15 +342,15 @@ cos_free[slot_free]<-cos_baseline[slot_free]
 ##Fit 2HMM
 y_2hmc<-depmix(sqValue~1,transition=~sin_work+cos_work+sin_free+cos_free,
                data=info,nstates=3,family=gaussian(),ntimes=nrow(info)) #Assume that there are 3 hidden states and that the emission density is Gaussian
-AIC <- array(NA,10) #The likelihood may have local maxima, thus try 10 starting values and compare AIC
+AIC_2hmc <- array(NA,10) #The likelihood may have local maxima, thus try 10 starting values and compare AIC
 for(a in 1:10){
   set.seed(a)
   HMMfit_2hmcs<-try(fit(y_2hmc,verbose=F),TRUE)
   if(isTRUE(class(HMMfit_2hmcs)=="try-error")) 
-  { next } else {AIC[a]=AIC(HMMfit_2hmcs)} 
+  { next } else {AIC_2hmc[a]=AIC(HMMfit_2hmcs)} 
 }
-AIC <- as.data.frame(AIC)
-set.seed(which(AIC==min(AIC,na.rm=TRUE)))
+AIC_2hmc <- as.data.frame(AIC_2hmc)
+set.seed(which(AIC_2hmc==min(AIC_2hmc,na.rm=TRUE)))
 HMMfit_2hmcs<-fit(y_2hmc,verbose=F)
 HMM_results_2hmc<-twoHarmonic_HMMs(HMM=HMMfit_2hmcs,sin1=sin_work,cos1=cos_work,sin2=sin_free,cos2=cos_free) #Summarise useful parameters 
 
@@ -408,8 +408,61 @@ ggplot(df_wss_NS)+
 ##Divide NS into 3 clusters
 library(TSclust) #Package for measurements of dissimilarity between time series
 diss_matrix_whole_EUCL_NS<- diss(dataNS, METHOD = "EUCL") #Calculate euclidean distance between rest profiles
-hclust_whole_EUCL_ward_NS <- hclust(diss_matrix_whole_EUCL_NS,method = "ward.D", members = NULL) #Agglomerative clustering with Ward¡¯s method
+hclust_whole_EUCL_ward_NS <- hclust(diss_matrix_whole_EUCL_NS,method = "ward.D", members = NULL) #Agglomerative clustering with Ward??¡¥s method
 hclust_whole_EUCL_ward_NS <- cutree(hclust_whole_EUCL_ward_NS, k = 3) #Cut the tree at 3 clusters
+
+cluster1w <- sleepwork[,which(hclust_whole_EUCL_ward_NS==1 & sleepwork$type=="Night")]
+cluster2w <- sleepwork[,which(hclust_whole_EUCL_ward_NS==2 & sleepwork$type=="Night")]
+cluster3w <- sleepwork[,which(hclust_whole_EUCL_ward_NS==3 & sleepwork$type=="Night")]
+
+median_class1_work <- apply(cluster1w, 1,median)
+median_class2_work <- apply(cluster2w, 1,median)
+median_class3_work <- apply(cluster3w, 1,median)
+
+sf <- 1/12
+time <- seq(0,24-sf,sf)
+cluster1w <- cbind(time,cluster1w)
+cluster2w <- cbind(time,cluster2w)
+cluster3w <- cbind(time,cluster3w)
+
+cluster1f <- sleepfree[,which(hclust_whole_EUCL_ward_NS==1 & sleepfree$type=="Night")]
+cluster2f <- sleepfree[,which(hclust_whole_EUCL_ward_NS==2 & sleepfree$type=="Night")]
+cluster3f <- sleepfree[,which(hclust_whole_EUCL_ward_NS==3 & sleepfree$type=="Night")]
+
+median_class1_free <- apply(cluster1f, 1,median)
+median_class2_free <- apply(cluster2f, 1,median)
+median_class3_free <- apply(cluster3f, 1,median)
+
+cluster1f <- cbind(time,cluster1f)
+cluster2f <- cbind(time,cluster2f)
+cluster3f <- cbind(time,cluster3f)
+
+NSWork3cluster1forplot <- melt(cluster1w,id.vars = 'time', variable.name = 'series')
+NSWork3cluster2forplot <- melt(cluster2w,id.vars = 'time', variable.name = 'series')
+NSWork3cluster3forplot <- melt(cluster3w,id.vars = 'time', variable.name = 'series')
+
+NSFree3cluster1forplot <- melt(cluster1f,id.vars = 'time', variable.name = 'series')
+NSFree3cluster2forplot <- melt(cluster2f,id.vars = 'time', variable.name = 'series')
+NSFree3cluster3forplot <- melt(cluster3f,id.vars = 'time', variable.name = 'series')
+
+#Producing Figure 5c
+ggplot()+
+  geom_line(data=NSWork3cluster1forplot, aes(x=time,y=value,group = series),col="#CC79A7",linetype = "dashed")+
+  geom_line(aes(x=cluster1w_NS$time, y=median_class1_work_NS),col='black',size=1.5,linetype = "dashed")+
+  scale_y_continuous(limits=c(0,1.15),breaks=seq(0,1,0.25)) + 
+  scale_x_discrete(breaks = c("0","1","2","3","4","5","6","7","8","9","10","11","12","13",
+                              "14","15","16","17","18","19","20","21","22","23","24"),
+                   limits=c("21","","","","1","","","","5","","","","9",
+                            "","","","13","","","","17","","",""))+
+  theme_bw()+
+  theme(legend.position="none")+
+  theme(text = element_text(size=20,family="serif"), plot.title = element_text(face = "bold"))+
+  xlab("Clock time")+
+  ylab("Probability of rest")+
+  ggtitle("c")+
+  annotate("rect", xmin = 2.5, xmax = 21.5, ymin = 1.02, ymax = 1.15,
+           alpha = 1,fill = "grey90")+
+  annotate("text", x = 3, y = 1.1, label = "NS Cluster 1 (work)",size=5,hjust=0)
 
 
 #################################
@@ -450,9 +503,9 @@ BIC(out_NN_N, out_NN_F, out_NN_AMH, out_NN_FGM)
 
 ##Model selected by AICc
 out_NN_F <- gjrm(list(workRI_logodd ~ type + Age + scoreHO + N_of_years_NS+ 
-                           type:Age + Age:scoreHO + Age:N_of_years_NS, 
-                         freeRI_logodd ~ type + N_of_years_NS), 
-                    data = parameter, margins = c("N","N"),Model = "B",BivD='F')
+                        type:Age + Age:scoreHO + Age:N_of_years_NS, 
+                      freeRI_logodd ~ type + N_of_years_NS), 
+                 data = parameter, margins = c("N","N"),Model = "B",BivD='F')
 
 ##Outliers
 th <- 4/140
@@ -460,28 +513,36 @@ idx_rm <- which(cooks.distance(out_NN_F$gam1)>th | cooks.distance(out_NN_F$gam2)
 
 ##Model selected by AICc without outliers
 out_NN_F <- gjrm(list(workRI_logodd ~ type + Age + scoreHO + N_of_years_NS+ 
-                           type:Age + type:scoreHO + Age:scoreHO + Age:N_of_years_NS, 
-                         freeRI_logodd ~ N_of_years_NS), 
-                    data = parameter[-idx_rm,], margins = c("N","N"),Model = "B",BivD='F')
+                        type:Age + type:scoreHO + Age:scoreHO + Age:N_of_years_NS, 
+                      freeRI_logodd ~ N_of_years_NS), 
+                 data = parameter[-idx_rm,], margins = c("N","N"),Model = "B",BivD='F')
 
-##Produce Figure S6A
+##Produce Figure S6a
 equationDS_age = function(x){
-  out_NN_F$coefficients[1] + 
-    (out_NN_F$coefficients[3] + out_NN_F$coefficients[8] * mean(parameter[-idx_rm,]$scoreHO) + out_NN_F$coefficients[9] * mean(parameter[-idx_rm,]$N_of_years_NS)) * x + 
-    out_NN_F$coefficients[4] * mean(parameter[-idx_rm,]$scoreHO) + 
-    out_NN_F$coefficients[5] * mean(parameter[-idx_rm,]$N_of_years_NS)
+  out_NN_F_12$coefficients[1] + 
+    (out_NN_F_12$coefficients[3] + 
+       out_NN_F_12$coefficients[8] * mean(parameter[which(parameter$type=='Day')[!which(parameter$type=='Day') %in% idx_rm],]$scoreHO) + 
+       out_NN_F_12$coefficients[9] * mean(parameter[-idx_rm,]$N_of_years_NS)) * x + 
+    out_NN_F_12$coefficients[4] * mean(parameter[which(parameter$type=='Day')[!which(parameter$type=='Day') %in% idx_rm],]$scoreHO) + 
+    out_NN_F_12$coefficients[5] * mean(parameter[-idx_rm,]$N_of_years_NS)
 }
+
 equationNS_age = function(x){
-  out_NN_F$coefficients[1] + out_NN_F$coefficients[2] + 
-    (out_NN_F$coefficients[3] + out_NN_F$coefficients[6] + out_NN_F$coefficients[8] * mean(parameter[-idx_rm,]$scoreHO) + out_NN_F$coefficients[9] * mean(parameter[-idx_rm,]$N_of_years_NS)) * x + 
-    (out_NN_F$coefficients[4] + out_NN_F$coefficients[7]) * mean(parameter[-idx_rm,]$scoreHO) + 
-    out_NN_F$coefficients[5] * mean(parameter[-idx_rm,]$N_of_years_NS)
+  out_NN_F_12$coefficients[1] + out_NN_F_12$coefficients[2] + 
+    (out_NN_F_12$coefficients[3] + 
+       out_NN_F_12$coefficients[6] + 
+       out_NN_F_12$coefficients[8] * mean(parameter[which(parameter$type=='Night')[!which(parameter$type=='Night') %in% idx_rm],]$scoreHO) + 
+       out_NN_F_12$coefficients[9] * mean(parameter[-idx_rm,]$N_of_years_NS)) * x + 
+    (out_NN_F_12$coefficients[4] + 
+       out_NN_F_12$coefficients[7]) * mean(parameter[which(parameter$type=='Night')[!which(parameter$type=='Night') %in% idx_rm],]$scoreHO) + 
+    out_NN_F_12$coefficients[5] * mean(parameter[-idx_rm,]$N_of_years_NS)
 }
+
 ggplot(parameter[-idx_rm,],aes(y=workRI_logodd,x=Age,group=type,color=type))+geom_point()+
   stat_function(fun=equationDS_age,geom="line",color='#C4961A')+
   stat_function(fun=equationNS_age,geom="line",color='steelblue')+
   ylab('Log odds of RI on work days')+
-  ggtitle('A')+
+  ggtitle('a')+
   theme_bw()+
   theme(text = element_text(size=20),plot.title = element_text(face = "bold"),legend.position="none")+
   scale_color_manual(values=c('#C4961A','steelblue'),labels=c('DS','NS'),name='Shift Type')
@@ -509,7 +570,3 @@ temp<- approx(lag,temp,xout=lag)$y
 temp <- detrend(temp, tt = 'linear', bp = c())
 spd_est_temp<-Spectrum_est_once(lag=lag, obs=temp,starting_time=starting_time, 
                                 sf=sf, max_harm=3, bt_size=100,CI=90) 
-
-
-
-
